@@ -96,7 +96,7 @@ nargin=length(varargin);
 if (nargin==0),
     Sys=tf(1,[1 5 4 0]);
 else
-    if ( (nargin~=1) || (~isa(varargin{1},'tf')) ),
+    if ( (nargin~=1) || (~isa(varargin{1},'tf')) && (~isa(varargin{1},'zpk'))),
         disp(' ');
         disp('Root Locus Plotter - proper usage is ''RLocusGui(Sys)'',')
         disp('  where ''Sys'' is a transfer function object.');
@@ -104,6 +104,9 @@ else
         close(handles.RLocusGuiFig);
         close(hWait);
         return
+    end
+    if (isa(varargin{1},'zpk')),
+        varargin{1} = tf(varargin{1});% Turn zpk into tf
     end
     Sys=varargin{1};            % Get system
     [n,d,tfOK]=testTF(Sys);     % Check it
@@ -588,7 +591,7 @@ else
         if isreal(z(i)),
             s=sprintf('%s %5.2g, ',s,z(i));
         else
-            s=sprintf('%s %5.2g±%5.2gj, ',s,real(z(i)),imag(z(i)));
+            s=sprintf('%s %5.2gï¿½%5.2gj, ',s,real(z(i)),imag(z(i)));
             i=i+1;
         end
         i=i+1;
@@ -863,7 +866,7 @@ if nargin==1,  %Plot on right axis in GUI.
     plot([handles.Xmin handles.Xmax],[0 0],'k:');
     plot([0 0],[-handles.Ymax handles.Ymax],'k:');
     axis([handles.Xmin handles.Xmax -handles.Ymax handles.Ymax]);
-    
+
     set(handles.txtKval,'Visible','on');
     set(handles.txtKval,'String','K = 0');
 end
@@ -908,16 +911,16 @@ if nargin==1,  %Show slider for user interaction.
     s{end+1}='Use slider to change K and see resulting location of roots.';
     s{end+1}=' ';
     s{end+1}='To redo animation, deselect button (at left), then reselect.';
-    
+
     set(handles.sldKIndex,'visible','on');
     set(handles.txtKStat,'visible','on');
     set(handles.txtKEdit,'visible','on');
-    
+
     set(handles.txtKeq0,'visible','on');
     set(handles.txtKeqInf,'visible','on');
     set(handles.sldKIndex,'value',get(handles.sldKIndex,'Max'));
     set(handles.txtKEdit,'String',handles.K(end));
-    
+
 end
 %-------------------------------------------------------------------------
 
@@ -1017,8 +1020,8 @@ sump=sum(p); sumz=sum(z);  %Sum of poles and zeros.
 sigma=real(sump-sumz)/q;   %Intersect on real axis.
 theta=180/q;               %Angle of asymptotes
 
-s{end+1}='Angle of asymptotes at odd multiples of ±180°/q ';
-eStr=['(i.e., ' sprintf(' ±%g°,',(1:2:q)*180/q)];
+s{end+1}='Angle of asymptotes at odd multiples of ï¿½180ï¿½/q ';
+eStr=['(i.e., ' sprintf(' ï¿½%gï¿½,',(1:2:q)*180/q)];
 s{end}=[s{end} eStr(1:(end-1)) ').'];   %Strip off last comma.
 s{end+1}=' ';
 s{end+1}=ListString('There exists ', p, ' pole',',');
@@ -1034,7 +1037,7 @@ s{end+1}=sprintf('Intersect is at ((%g)-(%g))/%g = %g/%g = %5.3g',...
 s{end}=[s{end} '  (highlighted by five pointed star).'];
 
 if q==1,
-    s{end+1}='Since q=1, there is a single asymptote at ±180°';
+    s{end+1}='Since q=1, there is a single asymptote at ï¿½180ï¿½';
     s{end+1}='(on negative real axis), so  intersect of this asymptote';
     s{end+1}='on the axis s not important (but it is shown anyway).';
 end
@@ -1204,7 +1207,7 @@ for i=1:length(z),   %For each zero...
             '- (zero at ' num2str(z(i)) ') ).'];
     end
     fs=['Theta_z' num2str(i)...
-        '=angle((%s) - (%s)) = angle(%s) = %s°'];
+        '=angle((%s) - (%s)) = angle(%s) = %sï¿½'];
     s{end+1}=sprintf(fs,num2str(cP),num2str(z(i)),...
         num2str(cP-z(i)),num2str(theta*180/pi));
 end
@@ -1227,7 +1230,7 @@ for i=1:length(p),
             firstLine=0;
         end
         fs=['Theta_p' num2str(i)...
-            '=angle((%s) - (%s)) = angle(%s) = %s°'];
+            '=angle((%s) - (%s)) = angle(%s) = %sï¿½'];
         s{end+1}=sprintf(fs,num2str(cP),num2str(p(i)),...
             num2str(cP-p(i)),num2str(theta*180/pi));
     end
@@ -1244,17 +1247,17 @@ while theta_D>=pi,               %...and less than pi.
 end
 
 s{end+1}='Angle of Departure is equal to:';
-s{end+1}='Theta_depart = 180° + sum(angle to zeros) - ';
+s{end+1}='Theta_depart = 180ï¿½ + sum(angle to zeros) - ';
 s{end}=[s{end} 'sum(angle to poles).'];
-s{end+1}=['Theta_depart = 180° + ' num2str(sum_zeros*180/pi)...
+s{end+1}=['Theta_depart = 180ï¿½ + ' num2str(sum_zeros*180/pi)...
     '-' num2str(sum_poles*180/pi) '.'];
-s{end+1}=sprintf('Theta_depart = %5.3g°.',theta_D1*180/pi);
+s{end+1}=sprintf('Theta_depart = %5.3gï¿½.',theta_D1*180/pi);
 if theta_D1 ~= theta_D,
-    s{end+1}=sprintf('This is equivalent to %5.3g°.',theta_D*180/pi);
+    s{end+1}=sprintf('This is equivalent to %5.3gï¿½.',theta_D*180/pi);
 end
 s{end+1}=' ';
 s{end+1}='This angle is shown in gray.';
-s{end+1}='It may be hard to see if it is near zero°.';
+s{end+1}='It may be hard to see if it is near zeroï¿½.';
 
 %Draw angle of departure with a larger (grey) arc.
 r=2*r;
@@ -1306,7 +1309,7 @@ for i=1:length(z),
                 '=angle( (Arriving zero) - (zero at ' num2str(p(i)) ') ).'];
         end
         fs=['Theta_z' num2str(i)...
-            '=angle((%s) - (%s)) = angle(%s) = %s°'];
+            '=angle((%s) - (%s)) = angle(%s) = %sï¿½'];
         s{end+1}=sprintf(fs,num2str(cZ),num2str(z(i)),...
             num2str(cZ-z(i)),num2str(theta*180/pi));
     end
@@ -1323,7 +1326,7 @@ for i=1:length(p),
             '(pole at ' num2str(p(i)) ') ).'];
     end
     fs=['Theta_p' num2str(i)...
-        '=angle((%s) - (%s)) = angle(%s) = %s°'];
+        '=angle((%s) - (%s)) = angle(%s) = %sï¿½'];
     s{end+1}=sprintf(fs,num2str(cZ),num2str(p(i)),...
         num2str(cZ-p(i)),num2str(theta*180/pi));
 end
@@ -1339,17 +1342,17 @@ while theta_D>=pi,
 end
 
 s{end+1}='Angle of arrival is equal to:';
-s{end+1}='Theta_arrive = 180° - sum(angle to zeros) + ';
+s{end+1}='Theta_arrive = 180ï¿½ - sum(angle to zeros) + ';
 s{end}=[s{end} 'sum(angle to poles).'];
-s{end+1}=['Theta_arrive = 180° - ' num2str(sum_zeros*180/pi)...
+s{end+1}=['Theta_arrive = 180ï¿½ - ' num2str(sum_zeros*180/pi)...
     '+' num2str(sum_poles*180/pi) '.'];
-s{end+1}=sprintf('Theta_arrive = %5.3g°.',theta_D1*180/pi);
+s{end+1}=sprintf('Theta_arrive = %5.3gï¿½.',theta_D1*180/pi);
 if theta_D1 ~= theta_D,
-    s{end+1}=sprintf('This is equivalent to %5.3g°.',theta_D*180/pi);
+    s{end+1}=sprintf('This is equivalent to %5.3gï¿½.',theta_D*180/pi);
 end
 s{end+1}=' ';
 s{end+1}='This angle is shown in gray.';
-s{end+1}='It may be hard to see if it is near 0°.';
+s{end+1}='It may be hard to see if it is near 0ï¿½.';
 
 r=2*r;
 DrawArc(cZ+r*exp(j*theta_D),cZ,[0.8 0.8 0.8],theta_D,r,'\theta_{arrive}');
@@ -1414,7 +1417,7 @@ else
         if wcross(i)==0,
             s{end}=[s{end} ' 0,'];
         else
-            s{end}=[s{end} sprintf(' ±%5.3gj,',wcross(i))];
+            s{end}=[s{end} sprintf(' ï¿½%5.3gj,',wcross(i))];
         end
     end
     if n>1,
@@ -1424,7 +1427,7 @@ else
     end
     s{end+1}=' ';
     s{end+1}='These crossings are shown on plot.';
-    
+
     for c=1:n %Plot each crossing of axis, along with value of K.
         plot(0,wcross(c),'o',...
             'MarkerSize',8,...
@@ -1494,7 +1497,7 @@ else
         rKeep=1;                   %arbitrarily choose first locus, and
         kKeep=round(length(k)/2);  %arbitrarily choose middle k value.
     end;
-    
+
     s0=r(rKeep,kKeep);   %Choose value of s0 on locus.
     s1=s0*1.05;          %Purposely choose value of s not quite on locus
 end
@@ -1628,7 +1631,7 @@ if handles.interactive,
     s{end+1}='   Note: this allows you to choose a large range of values';
     s{end+1}='   between 0 and infinity.  For larger values of K the roots';
     s{end+1}='   may not be visible due to scaling of axes of the graph.';
-    
+
     set(handles.txtKval,'string',sprintf('K =%5.3g',kVal));
     set(handles.txtKval,'Visible','on');
     set(handles.sldKIndex,'visible','on');
@@ -1833,5 +1836,3 @@ end
 guidata(hObject, handles);  %save changes to handles.
 makeLocus(handles);
 set(handles.cbRLocGrid,'Value',0)
-
-
