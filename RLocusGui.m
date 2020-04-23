@@ -1,4 +1,5 @@
 function varargout = RLocusGui(varargin)
+feature('DefaultCharacterSet','UTF-8');
 % RLocusGui M-file for RLocusGui.fig
 %
 % Proper syntax for calling the function is RLocusGui(sys), where "sys"
@@ -228,20 +229,21 @@ if ( size(mySys.num)~=[1 1] ),  % Check for SISO
     waitfor(warndlg(s));
     return
 end
-
-if (o_num>o_den),  %Check for proper transfer function
-    disp(' ');
-    disp('Root Locus Plotter - proper transfer functions only')
-    disp('  (order of numerator <= order of denominator).');
-    mySys
-    disp(' ');
-    tfOK=0;
-    beep;
-    s{1}='System has improper transfer function.';
-    s{2}='See command window for details.';
-    waitfor(warndlg(s));
-    return
-end
+% No longer necessary since MATLAB handles not-strictly proper 
+% transfer functions.
+% if (o_num>o_den),  %Check for proper transfer function
+%     disp(' ');
+%     disp('Root Locus Plotter - proper transfer functions only')
+%     disp('  (order of numerator <= order of denominator).');
+%     mySys
+%     disp(' ');
+%     tfOK=0;
+%     beep;
+%     s{1}='System has improper transfer function.';
+%     s{2}='See command window for details.';
+%     waitfor(warndlg(s));
+%     return
+% end
 
 %Check sign of highest order terms
 if ( sign(n1(end-o_num)) ~= sign(d1(end-o_den)) ),
@@ -1306,10 +1308,10 @@ for i=1:length(z),
         DrawArc(cZ,z(i),cHiLt,theta,r,['\theta_{z' num2str(i) '}']);
         if FirstLine==1,
             s{end+1}=['Theta_z' num2str(i) ...
-                '=angle( (Arriving zero) - (zero at ' num2str(p(i)) ') ).'];
+                '=angle( (Arriving zero) - (zero at ' num2str(z(i)) ') ).'];
         end
         fs=['Theta_z' num2str(i)...
-            '=angle((%s) - (%s)) = angle(%s) = %sï¿½'];
+            '=angle((%s) - (%s)) = angle(%s) = %s°'];
         s{end+1}=sprintf(fs,num2str(cZ),num2str(z(i)),...
             num2str(cZ-z(i)),num2str(theta*180/pi));
     end
@@ -1326,7 +1328,7 @@ for i=1:length(p),
             '(pole at ' num2str(p(i)) ') ).'];
     end
     fs=['Theta_p' num2str(i)...
-        '=angle((%s) - (%s)) = angle(%s) = %sï¿½'];
+        '=angle((%s) - (%s)) = angle(%s) = %s°'];
     s{end+1}=sprintf(fs,num2str(cZ),num2str(p(i)),...
         num2str(cZ-p(i)),num2str(theta*180/pi));
 end
@@ -1342,17 +1344,17 @@ while theta_D>=pi,
 end
 
 s{end+1}='Angle of arrival is equal to:';
-s{end+1}='Theta_arrive = 180ï¿½ - sum(angle to zeros) + ';
+s{end+1}='Theta_arrive = 180° - sum(angle to zeros) + ';
 s{end}=[s{end} 'sum(angle to poles).'];
-s{end+1}=['Theta_arrive = 180ï¿½ - ' num2str(sum_zeros*180/pi)...
+s{end+1}=['Theta_arrive = 180° - ' num2str(sum_zeros*180/pi)...
     '+' num2str(sum_poles*180/pi) '.'];
-s{end+1}=sprintf('Theta_arrive = %5.3gï¿½.',theta_D1*180/pi);
+s{end+1}=sprintf('Theta_arrive = %5.3g°.',theta_D1*180/pi);
 if theta_D1 ~= theta_D,
-    s{end+1}=sprintf('This is equivalent to %5.3gï¿½.',theta_D*180/pi);
+    s{end+1}=sprintf('This is equivalent to %5.3g°.',theta_D*180/pi);
 end
 s{end+1}=' ';
 s{end+1}='This angle is shown in gray.';
-s{end+1}='It may be hard to see if it is near 0ï¿½.';
+s{end+1}='It may be hard to see if it is near 0°.';
 
 r=2*r;
 DrawArc(cZ+r*exp(j*theta_D),cZ,[0.8 0.8 0.8],theta_D,r,'\theta_{arrive}');
