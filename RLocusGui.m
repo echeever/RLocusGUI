@@ -61,21 +61,21 @@ end
 
 %% Empty Matlab code (no comments) ---------------------------------------
 % --- Outputs from this function are returned to the command line.
-function varargout = RLocusGui_OutputFcn(hObject, eventdata, handles)
+function RLocusGui_OutputFcn(~, ~, ~)
 %Empty function (no output arguments)
 
 % --- Executes on selection change in lbRuleDescr.
-function lbRuleDescr_Callback(hObject, eventdata, handles)
+function lbRuleDescr_Callback(~, ~, ~) %#ok<*DEFNU>
 
 % --- Executes during object creation, after setting all properties.
-function lbRuleDescr_CreateFcn(hObject, eventdata, handles)
+function lbRuleDescr_CreateFcn(hObject, ~, ~)
 if ispc && isequal(get(hObject,'BackgroundColor'),...
         get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
 
 % --- Executes during object creation, after setting all properties.
-function sldKIndex_CreateFcn(hObject, eventdata, handles)
+function sldKIndex_CreateFcn(hObject, ~, ~)
 if isequal(get(hObject,'BackgroundColor'), ...
         get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor',[.9 .9 .9]);
@@ -178,12 +178,12 @@ guidata(RFig, handles);  % Update handles structure
 
 
 % ------------------------------------------------------------------------
-function [n1,d1,tfOK]=testTF(mySys, handles)
+function [n1,d1,tfOK]=testTF(mySys, ~)
 tfOK=1;
 if (~isa(mySys,'tf'))
     disp(' ');
     disp('Root Locus Plotter - transfer function systems only')
-    mySys
+    disp(mySys)
     disp(' ');
     tfOK=0;
     beep;
@@ -198,15 +198,15 @@ minSys=minreal(mySys);
 o_num=length(roots(n1));  %Order of numerator
 o_den=length(roots(d1));
 
-[n2,d2]=tfdata(mySys,'v');
+[n2,~]=tfdata(mySys,'v');
 
 if (length(n1)~=length(n2))
     disp(' ');
     disp('***************************Warning*****************************');
     disp('Original transfer function was:');
-    mySys
+    disp(mySys);
     disp('Some poles and zeros were equal.  After cancellation:');
-    minSys
+    disp(minSys)
     disp('The simplified transfer function is the one that will be used.');
     disp('**************************************************************');
     disp(' ');
@@ -215,16 +215,29 @@ if (length(n1)~=length(n2))
     s{2}='See command window for details.';
     waitfor(warndlg(s));
 end
-
-if ( size(mySys.num)~=[1 1] )  % Check for SISO
+if ~isequal(size(mySys.num), [1 1])  % Check for SISO
     disp(' ');
     disp('Root Locus Plotter - error.  SISO (Single Input Single Output)')
     disp('  systems only.');
-    mySys
+    disp(mySys)
     disp(' ');
     tfOK=0;
     beep;
     s{1}='SISO systems only.';
+    s{2}='See command window for details.';
+    waitfor(warndlg(s));
+    return
+end
+
+if (o_num>o_den)  %Check for proper transfer function
+    disp(' ');
+    disp('Root Locus Plotter - proper transfer functions only')
+    disp('  (order of numerator <= order of denominator).');
+    disp(mySys);
+    disp(' ');
+    tfOK=0;
+    beep;
+    s{1}='System has improper transfer function.';
     s{2}='See command window for details.';
     waitfor(warndlg(s));
     return
@@ -235,7 +248,7 @@ if ( sign(n1(end-o_num)) ~= sign(d1(end-o_den)) )
     disp(' ');
     disp('Root Locus Plotter - error.  Highest order term in numerator')
     disp('  and denominator must have same sign.');
-    mySys
+    disp(mySys);
     disp(' ');
     tfOK=0;
     beep;
@@ -279,7 +292,8 @@ else
 end
 
 divStr='G(s)H(s)= ';
-for i=1:n,  divStr=[divStr '-']; end
+% for i=1:n,  divStr=[divStr '-']; end
+divStr=[divStr repmat('-', 1, n)];
 set(handles.txtXfer,'String',{nStr,divStr,dStr});
 %Change type font and size.
 set(handles.txtXfer,'FontName','Courier New')
@@ -295,8 +309,8 @@ sys=handles.Sys;
 [num,den]=tfdata(sys,'v'); %Get (and save) numerator and denominator.
 handles.Num=num; handles.Den=den;
 [z,p]=zpkdata(sys,'v');  %Get zeros and poles (to accuracy of 0.01)
-z=round(real(z)*100)/100+j*round(imag(z)*100)/100;
-p=round(real(p)*100)/100+j*round(imag(p)*100)/100;
+z=round(real(z)*100)/100+1i*round(imag(z)*100)/100;
+p=round(real(p)*100)/100+1i*round(imag(p)*100)/100;
 realZIndex=find(abs(imag(z))<1E-3); %Determine which are real (i.e., on
 realPIndex=find(abs(imag(p))<1E-3); % the real axis)...
 z(realZIndex)=real(z(realZIndex));  % and set imag part to zerp.
@@ -307,7 +321,7 @@ m=length(z); n=length(p);  %Length of numerator and denominator.
 q=n-m;                     %Number of zeros at infinity.
 handles.M=m; handles.N=n; handles.Q=q; %Store values.
 
-[r,k1]=rlocus(sys);  % Let Matlab calculate appropriate range for k
+[~,k1]=rlocus(sys);  % Let Matlab calculate appropriate range for k
 for i=1:(length(k1)-1) %Generate intermediate points (smoother plots)
     k(2*(i-1)+1)=k1(i);  %Take value of k, but also...
     k(2*i)=(k1(i)+k1(i+1))/2;   %generate new point between consecutive k's
@@ -372,14 +386,14 @@ drawRLocus(handles,handles.axStatic,1.5,length(handles.K),...
 
 %% Utility functions and GUI control
 % --- Executes on button press in pbExit.  Closes Gui ---------------------
-function pbExit_Callback(hObject, eventdata, handles)
+function pbExit_Callback(~, ~, handles)
 disp(' '); disp('Root Locus GUI tool closed.'); disp(' '); disp(' ');
 close(handles.RLocusGuiFig);
 %--------------------------------------------------------------------------
 
 
 % --- Executes on button press in pbWebPage. Goes to my web page.----------
-function pbWebPage_Callback(hObject, eventdata, handles)
+function pbWebPage_Callback(~, ~, ~)
 web('http://lpsa.swarthmore.edu/Root_Locus/DeriveRootLocusRules.html');
 %--------------------------------------------------------------------------
 
@@ -396,7 +410,7 @@ end
 
 
 % --Called when radio button is pushed, dispatches the correct function.---
-function panelChooseRule_SelectionChangeFcn(hObject, eventdata, handles)
+function panelChooseRule_SelectionChangeFcn(hObject, ~, handles)
 s='';  %Start "s" as an empty string.
 set(handles.axRules,'Visible','on');   %Second axes visible.
 set(handles.txtKval,'Visible','off');  %Text invisible.
@@ -447,7 +461,7 @@ guidata(hObject, handles);  %save changes to handles.
 % --- Executes on button press in pbRuleDetail. ---------------------------
 % Depending on which rule is selected, go to appropriate section of web
 % page that describes rule.
-function pbRuleDetail_Callback(hObject, eventdata, handles)
+function pbRuleDetail_Callback(~, ~, handles)
 rt='http://lpsa.swarthmore.edu/Root_Locus/DeriveRootLocusRules.html';
 switch get(handles.panelChooseRule,'SelectedObject') 
     case handles.rbInfo, rt=[rt '#Background'];
@@ -470,7 +484,7 @@ web(rt);
 
 
 % --- Executes on slider movement.----------------------------------------
-function sldKIndex_Callback(hObject, eventdata, handles)
+function sldKIndex_Callback(hObject, ~, handles)
 kInd=round(get(hObject,'Value'));  %Get index of "K".
 set(hObject,'Value',kInd);
 
@@ -492,7 +506,8 @@ drawRLocus(handles,handles.axRules,1.5,length(handles.K),...
     get(handles.txtKval,'string'));
 for c=1:size(r,1)
     plot(real(r(c,kInd)),imag(r(c,kInd)),'o','MarkerSize',4,...
-        'MarkerEdgeColor',ColOrd(c,:),'MarkerFaceColor',ColOrd(c,:));
+        'MarkerEdgeColor',ColOrd(mod(c,7)+1,:),...
+        'MarkerFaceColor',ColOrd(mod(c,7)+1,:));
 end
 %-------------------------------------------------------------------------
 
@@ -500,7 +515,7 @@ end
 % --- Executes on button press in cbInteract------------------------------
 % This function is inelegant.  It handles the special case when the GUI is
 % interactive (i.e., for the last two rules).
-function cbInteract_Callback(hObject, eventdata, handles)
+function cbInteract_Callback(hObject, ~, handles)
 if get(handles.cbInteract,'Value')   %If the GUI is interactive.
     handles.interactive=1;
     guidata(hObject, handles);  %...update handles structure to save info.
@@ -601,7 +616,7 @@ plot([0 0],[-handles.Ymax handles.Ymax],'k:');
 
 for c=1:size(r,1)   %Plot locus
     plot(real(r(c,1:numPts)),imag(r(c,1:numPts)),...
-        'LineWidth',w,'Color',ColOrd(c,:));
+        'LineWidth',w,'Color',ColOrd(mod(c,7)+1,:));
 end
 box on;
 axis([handles.Xmin handles.Xmax -handles.Ymax handles.Ymax]);
@@ -670,7 +685,8 @@ hC=htmlAppend(hC, RuleNumBranch(handles));
 %Starting and ending points.
 hC{end+1}='</p><hr><h2><a name="RuleStart"></a>Start/End Points</h2><p>';
 %This line adds text generated by rule to hC.
-hC=htmlAppend(hC, RuleStartEnd(handles,newAx));
+hC=htmlAppend(hC, RuleStartEnd(handles));
+% hC=htmlAppend(hC, RuleStartEnd(handles,newAx));
 
 %Axes on real axis rule.
 hC{end+1}='</p><hr><h2><a name="RuleReal"></a>Locus on Real Axis</h2>';
@@ -689,7 +705,7 @@ if doPlot  %If plot is necessary, make it and save it.
     imwrite(x.cdata,'RLAsymptotes.png','png');
     hC{end+1}='<p class="figure"><img src="RLAsymptotes.png" alt="RLAsym">';
     hC{end}=[hC{end} '</p>'];
-end;
+end
 hC{end+1}='<p>';
 hC=htmlAppend(hC, s);  %Save string.
 
@@ -710,7 +726,7 @@ if doPlot  %If plot is necessary, make it and save it.
     x=getframe(newFig);
     imwrite(x.cdata,'RLDepart.png','png');
     hC{end+1}='<p class="figure"><img src="RLDepart.png" alt="RLDep"></p>';
-end;
+end
 hC{end+1}='<p>';
 hC=htmlAppend(hC, s);
 
@@ -721,7 +737,7 @@ if doPlot  %If plot is necessary, make it and save it.
     x=getframe(newFig);
     imwrite(x.cdata,'RLArrive.png','png');
     hC{end+1}='<p class="figure"><img src="RLArrive.png" alt="RLArv"></p>';
-end;
+end
 hC{end+1}='<p>';
 hC=htmlAppend(hC, s);
 
@@ -733,7 +749,7 @@ if doPlot  %If plot is necessary, make it and save it.
     imwrite(x.cdata,'RLCrossImag.png','png');
     hC{end+1}='<p class="figure"><img src="RLCrossImag.png" alt="RLImag">';
     hC{end}=[hC{end} '</p>'];
-end;
+end
 hC{end+1}='<p>';
 hC=htmlAppend(hC, s);
 
@@ -835,7 +851,8 @@ s{4}='Each branch is displayed in a different color.';
 
 
 %---------------Starting and ending points (i.e., poles and zeros)---------
-function s=RuleStartEnd(handles,ax)
+function s=RuleStartEnd(handles)
+% function s=RuleStartEnd(handles,ax)
 % The second argument is really a dummy argument - if it is there, it does
 % not create a graph (this is done for web page).  If it is not there, it
 % shows locus on right axis and allows for user interaction.
@@ -874,8 +891,8 @@ if nargin==1  %Plot on right axis in GUI.
         for c=1:size(r,1)
             plot(real(r(c,k1)),imag(r(c,k1)),'o',...
                 'MarkerSize',4,...
-                'MarkerEdgeColor',ColOrd(c,:),...
-                'MarkerFaceColor',ColOrd(c,:));
+                'MarkerEdgeColor',ColOrd(mod(c,7)+1,:),...
+                'MarkerFaceColor',ColOrd(mod(c,7)+1,:));
         end
         hold off
         pause(del);
@@ -935,13 +952,14 @@ s{6}=' ';
 axisPoles=flipud(find(imag(p)==0));  %Flip to go highest->lowest.
 axisZeros=flipud(find(imag(z)==0));
 
-if length(axisPoles)~=0      %We have poles on axis - highlight them.
+if ~isempty(axisPoles)      %We have poles on axis - highlight them.
     plot(p(axisPoles),0,'s',...
         'MarkerSize',12,...
         'MarkerEdgeColor',cHiLt,...
         'MarkerFaceColor',cHiLt);
 end
-if length(axisZeros~=0)      %We have zeros on axis - highlight them.
+
+if ~isempty(axisZeros)      %We have zeros on axis - highlight them.
     plot(z(axisZeros),0,'d',...
         'MarkerSize',12,...
         'MarkerEdgeColor',cHiLt,...
@@ -1034,7 +1052,7 @@ plot(sigma,0,'p',...    %Plot intersect with big start.
     'MarkerEdgeColor',cHiLt,...
     'MarkerFaceColor',cHiLt);
 radius=max(get(gca,'YLim'))*5;   %Make radius big enough to go off page.
-for i=0:(q-1),
+for i=0:(q-1)
     theta_i=(2*i+1)*theta*pi/180; %Plot asymptotes.
     line([sigma sigma+radius*cos(theta_i)],...
         [0 radius*sin(theta_i)],...
@@ -1174,7 +1192,7 @@ if length(cmplxPole)>1  %This is laborious, do in only once.
     s{1}='Loop gain has more than one pair of complex poles.  We will do';
     s{2}='analysis for only one pair.  Others are left as an exercise.';
     s{3}=' ';
-end;
+end
 cP=cmplxPole(1);   %Choose the complex conjugate to analyze.
 s{end+1}=['Find angle of departure from pole at ' num2str(cP)];
 s{end+1}='  Note: Theta_p2 denotes angle labeled theta with subscript p2.';
@@ -1189,7 +1207,7 @@ for i=1:length(z)   %For each zero...
     sum_zeros=sum_zeros+theta; %...find sum of angles,
     %...draw arc on plot to show angle.
     DrawArc(cP,z(i),cHiLt,theta,r,['\theta_{z' num2str(i) '}']);
-    if i==1, %Give more detail with first one, others will be succinct.
+    if i==1 %Give more detail with first one, others will be succinct.
         s{end+1}=['Theta_z' num2str(i) '=angle((Departing pole)'...
             '- (zero at ' num2str(z(i)) ') ).'];
     end
@@ -1211,7 +1229,7 @@ for i=1:length(p)
         theta=angle(cP-p(i));
         sum_poles=sum_poles+theta;
         DrawArc(cP,p(i),cHiLt,theta,r,['\theta_{p' num2str(i) '}']);
-        if firstLine==1,
+        if firstLine==1
             s{end+1}=['Theta_p' num2str(i) '=angle((Departing pole)'...
                 '- (pole at ' num2str(p(i)) ') ).'];
             firstLine=0;
@@ -1239,7 +1257,7 @@ s{end}=[s{end} 'sum(angle to poles).'];
 s{end+1}=['Theta_depart = 180 + ' num2str(sum_zeros*180/pi)...
     '-' num2str(sum_poles*180/pi) '.'];
 s{end+1}=sprintf('Theta_depart = %5.3g.',theta_D1*180/pi);
-if theta_D1 ~= theta_D,
+if theta_D1 ~= theta_D
     s{end+1}=sprintf('This is equivalent to %5.3g.',theta_D*180/pi);
 end
 s{end+1}=' ';
@@ -1248,7 +1266,7 @@ s{end+1}='It may be hard to see if it is near zero.';
 
 %Draw angle of departure with a larger (grey) arc.
 r=2*r;
-DrawArc(cP+r*exp(j*theta_D),cP,[0.8 0.8 0.8],theta_D,r,'\theta_{depart}');
+DrawArc(cP+r*exp(1i*theta_D),cP,[0.8 0.8 0.8],theta_D,r,'\theta_{depart}');
 %-------------------------------------------------------------------------
 
 
@@ -1276,7 +1294,7 @@ if length(cmplxZero)>1
     s{1}='Loop gain has more than one pair of complex zeros.  We will do';
     s{2}='analysis for only one pair.  Others are left as an exercise.';
     s{3}=' ';
-end;
+end
 chosenZero=1;
 cZ=cmplxZero(chosenZero);   %Choose the complex conjugate to analyze.
 s{end+1}=['Find angle of arrival to pole at ' num2str(cZ)];
@@ -1342,7 +1360,7 @@ s{end+1}='This angle is shown in gray.';
 s{end+1}='It may be hard to see if it is near 0.';
 
 r=2*r;
-DrawArc(cZ+r*exp(j*theta_D),cZ,[0.8 0.8 0.8],theta_D,r,'\theta_{arrive}');
+DrawArc(cZ+r*exp(1i*theta_D),cZ,[0.8 0.8 0.8],theta_D,r,'\theta_{arrive}');
 drawRLocus(handles,ax,1.5,length(k),'Angle of arrival shown in gray');
 %-------------------------------------------------------------------------
 
@@ -1418,20 +1436,20 @@ else
     for c=1:n %Plot each crossing of axis, along with value of K.
         plot(0,wcross(c),'o',...
             'MarkerSize',8,...
-            'MarkerEdgeColor',ColOrd(lcross(c),:),...
-            'MarkerFaceColor',ColOrd(lcross(c),:));
+            'MarkerEdgeColor',ColOrd(mod(lcross(c),7)+1,:),...
+            'MarkerFaceColor',ColOrd(mod(lcross(c),7)+1,:));
         text(-0.25,wcross(c),sprintf('K=%5.3g',kcross(c)),...
-            'Color',ColOrd(lcross(c),:),...
+            'Color',ColOrd(mod(lcross(c),7)+1,:),...
             'HorizontalAlignment','Right',...
             'VerticalAlignment','bottom');
     end
     for c=1:m
         plot(0,wcross2(c),'o',...
             'MarkerSize',8,...
-            'MarkerEdgeColor',ColOrd(lcross2(c),:),...
-            'MarkerFaceColor',ColOrd(lcross2(c),:));
+            'MarkerEdgeColor',ColOrd(mod(lcross2(c),7)+1,:),...
+            'MarkerFaceColor',ColOrd(mod(lcross2(c),7)+1,:));
         text(-0.25,wcross2(c),sprintf('K=%5.3g',kcross2(c)),...
-            'Color',ColOrd(lcross2(c),:),...
+            'Color',ColOrd(mod(lcross2(c),7)+1,:),...
             'HorizontalAlignment','Right',...
             'VerticalAlignment','top');
     end
@@ -1483,7 +1501,7 @@ else
     if bestZeta>0.99   %We didn't find any complex poles, so
         rKeep=1;                   %arbitrarily choose first locus, and
         kKeep=round(length(k)/2);  %arbitrarily choose middle k value.
-    end;
+    end
 
     s0=r(rKeep,kKeep);   %Choose value of s0 on locus.
     s1=s0*1.05;          %Purposely choose value of s not quite on locus
@@ -1525,7 +1543,7 @@ ce=den+kVal*[zeros(1,np1-np2) num];
 s2=roots(ce);
 drawRLocus(handles,ax,1.5,length(k)',...
     sprintf('Design for pole at s=%5.3g + %5.3g',real(s1),imag(s1)));
-for i=1:length(s2),     %Plot resulting roots.
+for i=1:length(s2)     %Plot resulting roots.
     plot(real(s2(i)),imag(s2(i)),'o','MarkerSize',8,...
         'MarkerEdgeColor',cHiLt,'MarkerFaceColor',cHiLt);
 end
@@ -1606,8 +1624,8 @@ drawRLocus(handles,ax,1.5,length(k)',['Roots at K=' num2str(kVal)]);
 for c=1:size(r,1)
     plot(real(r(c,kInd)),imag(r(c,kInd)),'o',...
         'MarkerSize',6,...
-        'MarkerEdgeColor',ColOrd(c,:),...
-        'MarkerFaceColor',ColOrd(c,:));
+        'MarkerEdgeColor',ColOrd(mod(c,7)+1,:),...
+        'MarkerFaceColor',ColOrd(mod(c,7)+1,:));
 end
 
 if handles.interactive
@@ -1646,7 +1664,7 @@ else
 end
 %-------------------------------------------------------------------------
 
-function txtKEdit_Callback(hObject, eventdata, handles)
+function txtKEdit_Callback(hObject, ~, handles)
 kSet=str2double(get(hObject,'String'));     %Get k value
 kSet=abs(kSet);                             %Make it positive
 % Insert new value of k into array and recalculate root locus
@@ -1663,7 +1681,7 @@ guidata(hObject, handles);  %save changes to handles.
 RuleLocPos(handles);        %Plot
 
 % --- Executes during object creation, after setting all properties.
-function txtKEdit_CreateFcn(hObject, eventdata, handles)
+function txtKEdit_CreateFcn(hObject, ~, ~)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
@@ -1682,17 +1700,17 @@ f = figure('Visible','off',...
 
 % Find all valid transfer functions in workspace
 s=evalin('base','whos(''*'')');
-tfs=strvcat(s.class);             %x=class of all variable
+tfs=char(s.class);             %x=class of all variable
 tfs=strcmp(cellstr(tfs),'tf');    %Convert to cell array and find tf's
 s=s(tfs);                         %Get just tf's
-vname=strvcat(s.name);
-x=cell(length(s)+1,2);
+vname=char(s.name);
+% x=cell(length(s)+1,2);
 j=1;
 varName{j}='User Systems';
 varTF{j}=[];
 for i=1:length(s)
     myTF=evalin('base',vname(i,:));
-    if (size(myTF.num)==[1 1])   %Check for siso
+    if (isequal(size(myTF.num), [1 1]))   %Check for siso
         [n,d]=tfdata(myTF,'v');
         o_num=length(roots(n));     %Order of numerator
         o_den=length(roots(d));
@@ -1730,7 +1748,7 @@ end
 close(gcf)
 
 % Resume GUI when value is chosen
-function popup_menu_Callback(hObject,~)
+function popup_menu_Callback(~,~)
 uiresume
 
 function validSys_Callback(~,~)
@@ -1740,12 +1758,12 @@ s{3}=' 2) Proper systems (order of num <= order of den);';
 s{4}=' 3) Sxxign of highest order num and den coefficients are equal.';
 s{5}=' 4) System must be a transfer function (i.e., not state space...)';
 s{6}=' 5) Cannot find crossing of imag axis if locus exists only on axis.';
-s
+% disp(s);
 beep
 helpdlg(s,'Valid Systems');
 
 % --- Executes on selection change in popupSystems.
-function popupSystems_Callback(hObject, eventdata, handles)
+function popupSystems_Callback(hObject, ~, handles)
 i=get(hObject,'Value');
 if  i ~= 1   %If this is not the "User Systems" choice
     if i==2  %This is the refresh choice
@@ -1762,7 +1780,7 @@ guidata(hObject, handles);
 makeLocus(handles);
 
 % --- Executes on button press in pbValid.
-function pbValid_Callback(hObject, eventdata, handles)
+function pbValid_Callback(~, ~, ~)
 s{1}='Restrictions on systems:';
 s{2}=' 1) SISO (Single Input Single Output);';
 s{3}=' 2) Proper systems (order of num <= order of den);';
@@ -1780,11 +1798,10 @@ guidata(handles.RLocusGuiFig, handles);  %save changes to handles.
 function [varName, varTF]=getBaseTFs
 % Find all valid transfer functions in workspace
 s=evalin('base','whos(''*'')');
-tfs=strvcat(s.class);             %x=class of all variable
+tfs=char(s.class);             %x=class of all variable
 tfs=strcmp(cellstr(tfs),'tf');    %Convert to cell array and find tf's
 s=s(tfs);                         %Get just tf's
-vname=strvcat(s.name);
-x=cell(length(s)+1,2);
+vname=char(s.name);
 
 varName{1}='User Systems';
 varTF{1}=[];
@@ -1793,7 +1810,7 @@ varTF{2}=[];
 j=2;
 for i=1:length(s)
     myTF=evalin('base',vname(i,:));
-    if (size(myTF.num)==[1 1])    %Check for siso
+    if (isequal(size(myTF.num), [1 1]))    %Check for siso
         [n,d]=tfdata(myTF,'v');
         o_num=length(roots(n));   %Order of numerator
         o_den=length(roots(d));
@@ -1809,7 +1826,7 @@ end
 
 
 % --- Executes on button press in butZoom.
-function butZoom_Callback(hObject, eventdata, handles)
+function butZoom_Callback(hObject, ~, handles)
 % hObject    handle to butZoom (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
